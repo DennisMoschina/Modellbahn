@@ -6,3 +6,7 @@ TestGround/lib/README
 TestGround/platformio.ini
 TestGround/src/TestProgramm.cpp
 TestGround/test/README
+.DS_Store
+Burg/Taster/.vscode/c_cpp_properties.json
+Burg/Taster/.vscode/extensions.json
+Burg/Taster/.vscode/launch.json
