@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include <Servo.h>
-#include <Wire.h>
 
 #include "Modellbahn.h"
+// #include "SoundDioramaSlave.h"
 
 // Position in der die Rauchkammer geöffnet ist
 #define SERVO_OPEN 90
@@ -35,10 +35,14 @@
 // Adresse des Arduinos für die I2C Kommunikation mit dem Taster Arduino
 #define ADDRESS 0
 
+// The sound file the taster arduino should play
+#define SOUND_FILE 1
+#define SOUND_DELAY 1200
+
 NeoPixel flashLED = NeoPixel(NUMPIXELS, FLASH_PIN);
 Servo myServo;
 
-bool shouldExplode = false;
+SoundDioramaSlave dioramaSlave(ADDRESS);
 
 
 // Simuliere die Showsprengung
@@ -58,6 +62,10 @@ void explosion() {
   }
   digitalWrite(ALARM_LED_PIN, LOW);
 
+  dioramaSlave.playSoundWithID(SOUND_FILE);
+
+  delay(SOUND_DELAY);
+
   // Rauch aus der Rauchkammer rauslassen
   myServo.write(SERVO_OPEN);
 
@@ -73,35 +81,29 @@ void explosion() {
 }
 
 
-/* Setze shouldExplode auf true wenn eine Signal vom Taster Arduino ankommt
-*
-* Die eigentlich Explosion kann nicht in dieser Funktion ausgeführt werden, da
-* es bei Interrupt Funktionen Probleme mit delay gibt.
-*/
-void receiveEvent(int howMany) {
-  shouldExplode = Wire.read();
-}
-
-
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
+
+  dioramaSlave.begin();
 
   pinMode(SMOKER_PIN, OUTPUT);
   pinMode(ALARM_LED_PIN, OUTPUT);
 
   myServo.attach(SERVO_PIN);
   myServo.write(SERVO_CLOSED);
-
-//starte die I2C Kommunikation mit dem Taster Arduino
-  Wire.begin(ADDRESS);
-  Wire.onReceive(receiveEvent);
+  flashLED.off();
 }
 
 
 void loop() {
   // Überprüfe, ob Explosion stattfinden soll und evtl starten
-  if (shouldExplode) {
+  bool shouldPerform = dioramaSlave.shouldPerform();
+  Serial.print("should perform in loop: ");
+  Serial.println(shouldPerform);
+  if (shouldPerform) {
+    Serial.println("about to perform");
     explosion();
-    shouldExplode = false;
+    dioramaSlave.performed();
   }
+  delay(100);
 }

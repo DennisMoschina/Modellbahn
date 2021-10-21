@@ -8,3 +8,4 @@ TestGround/src/TestProgramm.cpp
 TestGround/test/README
 */.DS_Store
 */.vscode/*
+*.json

@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <Wire.h>
+#include <Modellbahn.h>
 
 #define ADDRESS 2
 #define TRAIN_PIN 12
@@ -10,7 +10,7 @@
 // Helligkeit der Beleuchtung
 #define LIGHTING_BRIGHTNESS 50
 
-boolean shouldStartTrain = false;
+SoundDioramaSlave dioramaSlave(ADDRESS);
 
 void startTrain() {
   digitalWrite(TRAIN_PIN, HIGH);
@@ -18,21 +18,11 @@ void startTrain() {
   digitalWrite(TRAIN_PIN, LOW);
 }
 
-/* Setze shouldStartTrain auf true wenn eine Signal vom Taster Arduino ankommt
-*
-* Die eigentlich Explosion kann nicht in dieser Funktion ausgeführt werden, da
-* es bei Interrupt Funktionen Probleme mit delay gibt.
-*/
-void receiveEvent(int howMany) {
-  shouldStartTrain = Wire.read();
-}
-
 void setup() {
   pinMode(TRAIN_PIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
 
-  Wire.begin(ADDRESS);
-  Wire.onReceive(receiveEvent);
+  dioramaSlave.begin();
 
   randomSeed(analogRead(A0));
 
@@ -47,8 +37,8 @@ void loop() {
     analogWrite(LED_PIN, LIGHTING_BRIGHTNESS);
   }
 
-  if (shouldStartTrain) {
+  if (dioramaSlave.shouldPerform()) {
     startTrain();
-    shouldStartTrain = false;
+    dioramaSlave.performed();
   }
 }
